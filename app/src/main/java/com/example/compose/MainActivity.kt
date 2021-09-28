@@ -7,12 +7,17 @@ import androidx.activity.compose.setContent
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
-import androidx.compose.ui.tooling.preview.Preview
 import com.example.compose.ui.theme.ComposeTheme
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -20,20 +25,24 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.*
 
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.debugInspectorInfo
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -46,8 +55,14 @@ import androidx.navigation.compose.rememberNavController
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
+import com.google.accompanist.pager.ExperimentalPagerApi
+import com.google.accompanist.pager.HorizontalPager
+import com.google.accompanist.pager.PagerState
+import com.google.accompanist.pager.rememberPagerState
+import kotlinx.coroutines.launch
 
-
+@ExperimentalPagerApi
+@ExperimentalMaterialApi
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,10 +72,14 @@ class MainActivity : ComponentActivity() {
                 ContentView {
                     startActivity(Intent(this,ChatRoomActivity::class.java))
                 }
+
             }
         }
     }
 }
+
+@ExperimentalPagerApi
+@ExperimentalMaterialApi
 @Composable
 fun ContentView(navigateToDetail: (RandomUser) -> Unit){
     Surface(color = MaterialTheme.colors.background) {
@@ -72,6 +91,8 @@ fun ContentView(navigateToDetail: (RandomUser) -> Unit){
     }
 }
 
+@ExperimentalPagerApi
+@ExperimentalMaterialApi
 @Composable
 fun BottomBarMain(navControll: NavHostController, navigateToDetail: (RandomUser) -> Unit) {
     NavHost(navControll, startDestination = Screen.Home.route ){
@@ -97,15 +118,236 @@ fun ChatScreen(navigateToDetail: (RandomUser) -> Unit){
     }
 
 }
-
+@ExperimentalPagerApi
+@ExperimentalMaterialApi
 @Composable
 fun HomeScreen(){
-    Text(
-        text = Screen.Home.title,
-        fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colors.primary,
-        fontSize = 20.sp
+    Scaffold {
+
+        val textState= remember{ mutableStateOf(TextFieldValue(""))}
+        MySearhView(textState)
+        val tabs= listOf(TabItem.Recent, TabItem.Philosophy,
+            TabItem.Literature,TabItem.Fiction, TabItem.Computer,
+            TabItem.Toeic)
+
+        val pagerState = rememberPagerState(pageCount = tabs.size)
+        TextTabs(tabs,pagerState)
+        TabsContent(tabs = tabs, pagerState = pagerState)
+    }
+
+}
+
+@Composable
+fun RecentScreen(){
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxSize().offset(0.dp,200.dp)
+    ) {
+        Text(text = "Recent View")
+    }
+
+}
+
+@Composable
+fun LiteratureScreen(){
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxSize().offset(0.dp,200.dp)
+    ) {
+        Text(text = "Literature View")
+    }
+
+}
+
+
+@Composable
+fun FictionScreen(){
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxSize().offset(0.dp,200.dp)
+    ) {
+        Text(text = "Fiction View")
+    }
+
+}
+
+
+@Composable
+fun PhilosophyScreen(){
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxSize().offset(0.dp,200.dp)
+    ) {
+        Text(text = "Philosophy View")
+    }
+
+}
+
+
+@Composable
+fun ComputerScreen(){
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxSize().offset(0.dp,200.dp)
+    ) {
+        Text(text = "Computer View")
+    }
+
+}
+
+@Composable
+fun ToeicScreen(){
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxSize().offset(0.dp,200.dp)
+    ) {
+        Text(text = "Toeic View")
+    }
+
+}
+
+@ExperimentalPagerApi
+@ExperimentalMaterialApi
+@Composable
+fun TabsContent(tabs: List<TabItem>, pagerState: PagerState){
+    HorizontalPager(state = pagerState) { page ->
+        tabs[page].screen()
+
+
+    }
+}
+
+@ExperimentalPagerApi
+@ExperimentalMaterialApi
+@Composable
+fun TextTabs(tabs: List<TabItem>, pagerState: PagerState){
+    val scope = rememberCoroutineScope()
+//    var tabIndex by remember { mutableStateOf(0)}
+//    var tabdata = listOf("최근", "문학","소설","철학","컴퓨터","토익")
+
+    ScrollableTabRow(selectedTabIndex =
+        pagerState.currentPage,modifier =Modifier.offset(0.dp,156.dp),
+    backgroundColor = Color.White,
+        edgePadding=10.dp,
+    divider = {
+        TabRowDefaults.Divider(
+            thickness = 0.dp
+        )
+    }, indicator = {tabPositions ->
+            TabRowDefaults.Indicator(
+                modifier = Modifier.customTabIndicatorOffset(tabPositions[pagerState.currentPage]),
+                height = 3.dp,
+                color = Color.Red
+            )
+        }) {
+
+        val interactionSource = remember { MutableInteractionSource() }
+
+        tabs.forEachIndexed{ index, tab ->
+            Tab(selected = pagerState.currentPage == index,
+                onClick = {
+                scope.launch{
+                    pagerState.animateScrollToPage(index)
+                }
+
+
+            }, text={
+                Text(text = tab.title, color = Color.Black,  )
+            }, modifier = Modifier
+                    .padding(0.dp)
+                    .clickable(
+                        interactionSource = interactionSource,
+                        indication = null,
+                        enabled = true
+
+                    ) {})
+                
+
+        }
+    }
+
+}
+
+@Composable
+fun Modifier.customTabIndicatorOffset(currentTabPosition: TabPosition) : Modifier = composed(
+inspectorInfo = debugInspectorInfo {
+    name="tabIndicatorOffset"
+    value=currentTabPosition
+}
+) {
+    val indicatorWidth = 32.dp
+    val currenttabWidth = currentTabPosition.width
+    val indicatorOffset by animateDpAsState(
+        targetValue = currentTabPosition.left + currenttabWidth/2 - indicatorWidth/2,
+    animationSpec = tween(durationMillis = 0,easing = FastOutSlowInEasing))
+    fillMaxWidth()
+        .wrapContentSize(Alignment.BottomStart)
+        .offset(x = indicatorOffset)
+        .width(indicatorWidth)
+}
+
+@Composable
+fun MySearhView(state: MutableState<TextFieldValue>){
+
+    Column(modifier = Modifier.fillMaxWidth(),
+    horizontalAlignment = Alignment.CenterHorizontally,
+    verticalArrangement = Arrangement.Center) {
+
+        Card(elevation = 20.dp,
+            modifier = Modifier
+                .size(295.dp, 50.dp)
+                .offset(0.dp, 70.dp),
+        shape = RoundedCornerShape(5.dp)) {
+
+    TextField(value = state.value, onValueChange = { value->
+        state.value=value
+    },
+    modifier = Modifier.fillMaxSize(),
+
+    textStyle = TextStyle(color = Color.Gray,fontSize = 13.sp),
+
+        leadingIcon = {
+            Icon(Icons.Default.Search, contentDescription ="",
+            modifier = Modifier
+                .size(20.dp))
+        },
+        trailingIcon = {
+            if (state.value != TextFieldValue("")) {
+                IconButton(onClick = {
+                    state.value = TextFieldValue("")
+                })
+                {
+                    Icon(
+                        Icons.Default.Close,
+                        contentDescription = "",
+                        modifier = Modifier
+                            .size(20.dp)
+
+                    )
+
+                }
+            }
+        },
+        singleLine = true,
+        shape = RectangleShape,
+        colors = TextFieldDefaults.textFieldColors(
+            textColor = Color.White,
+            cursorColor = Color.White,
+            leadingIconColor = Color.LightGray,
+            trailingIconColor = Color.LightGray,
+            backgroundColor = Color.White,
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent,
+            disabledIndicatorColor = Color.Transparent
+        )
+
+
     )
+        }
+    }
+
+
+
 }
 
 @Composable
@@ -176,7 +418,7 @@ fun RandomUserView(randomuser:RandomUser, navigateToDetail:(RandomUser) -> Unit)
             .height(74.dp)
             .padding(20.dp, 10.dp)
             .fillMaxWidth()
-            .clickable {navigateToDetail(randomuser)},
+            .clickable { navigateToDetail(randomuser) },
             verticalAlignment = Alignment.CenterVertically){
             ProfileImg(imgUrl = randomuser.ProfileImg)
 
