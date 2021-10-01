@@ -11,15 +11,15 @@ import com.example.compose.ui.theme.ComposeTheme
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
-import androidx.compose.animation.core.FastOutLinearInEasing
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.GridCells
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -41,6 +41,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.debugInspectorInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 
@@ -64,6 +65,7 @@ import kotlinx.coroutines.launch
 @ExperimentalPagerApi
 @ExperimentalMaterialApi
 class MainActivity : ComponentActivity() {
+    @ExperimentalFoundationApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -78,6 +80,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@ExperimentalFoundationApi
 @ExperimentalPagerApi
 @ExperimentalMaterialApi
 @Composable
@@ -91,6 +94,7 @@ fun ContentView(navigateToDetail: (RandomUser) -> Unit){
     }
 }
 
+@ExperimentalFoundationApi
 @ExperimentalPagerApi
 @ExperimentalMaterialApi
 @Composable
@@ -118,6 +122,8 @@ fun ChatScreen(navigateToDetail: (RandomUser) -> Unit){
     }
 
 }
+
+@ExperimentalFoundationApi
 @ExperimentalPagerApi
 @ExperimentalMaterialApi
 @Composable
@@ -133,26 +139,57 @@ fun HomeScreen(){
         val pagerState = rememberPagerState(pageCount = tabs.size)
         TextTabs(tabs,pagerState)
         TabsContent(tabs = tabs, pagerState = pagerState)
+
     }
 
 }
 
+@ExperimentalFoundationApi
 @Composable
 fun RecentScreen(){
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.fillMaxSize().offset(0.dp,200.dp)
-    ) {
-        Text(text = "Recent View")
+
+    Column(modifier = Modifier.fillMaxSize(),
+    verticalArrangement = Arrangement.Top) {
+        GridItemView()
     }
 
+
+
+
+
+}
+
+@ExperimentalFoundationApi
+@Composable
+fun GridItemView() {
+    val list =(1..20).map{  }
+
+    LazyVerticalGrid(cells = GridCells.Fixed(3) ,
+        content = {
+                  items(list.size){ index: Int ->
+
+                    Column(horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Card(modifier = Modifier.size(72.dp,91.dp),
+                        backgroundColor = Color.Gray, elevation = 8.dp) {
+
+                        }
+                        Text(text = "오징어게임", fontSize = 14.sp, fontStyle = FontStyle.Normal, color = Color.Black)
+                        Text(text ="곽건" , fontSize = 12.sp, color = Color.LightGray)
+
+                    }
+                      
+                  }
+        }, contentPadding = PaddingValues(start = 0.dp, top = 0.dp),)
 }
 
 @Composable
 fun LiteratureScreen(){
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.fillMaxSize().offset(0.dp,200.dp)
+        modifier = Modifier
+            .wrapContentSize(Alignment.Center)
+            .offset(0.dp, 160.dp)
     ) {
         Text(text = "Literature View")
     }
@@ -164,7 +201,9 @@ fun LiteratureScreen(){
 fun FictionScreen(){
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.fillMaxSize().offset(0.dp,200.dp)
+        modifier = Modifier
+            .fillMaxSize()
+            .wrapContentSize(Alignment.Center)
     ) {
         Text(text = "Fiction View")
     }
@@ -175,10 +214,12 @@ fun FictionScreen(){
 @Composable
 fun PhilosophyScreen(){
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.fillMaxSize().offset(0.dp,200.dp)
+
+        modifier = Modifier
+            .fillMaxSize()
+            .wrapContentSize(Alignment.Center)
     ) {
-        Text(text = "Philosophy View")
+        Text(text = "Philosophy View", modifier = Modifier.align(Alignment.CenterHorizontally))
     }
 
 }
@@ -188,7 +229,9 @@ fun PhilosophyScreen(){
 fun ComputerScreen(){
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.fillMaxSize().offset(0.dp,200.dp)
+        modifier = Modifier
+            .fillMaxSize()
+            .wrapContentSize(Alignment.Center)
     ) {
         Text(text = "Computer View")
     }
@@ -199,7 +242,8 @@ fun ComputerScreen(){
 fun ToeicScreen(){
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.fillMaxSize().offset(0.dp,200.dp)
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center
     ) {
         Text(text = "Toeic View")
     }
@@ -210,7 +254,7 @@ fun ToeicScreen(){
 @ExperimentalMaterialApi
 @Composable
 fun TabsContent(tabs: List<TabItem>, pagerState: PagerState){
-    HorizontalPager(state = pagerState) { page ->
+    HorizontalPager(state = pagerState, modifier = Modifier.offset(0.dp,240.dp)) { page ->
         tabs[page].screen()
 
 
@@ -279,7 +323,7 @@ inspectorInfo = debugInspectorInfo {
     val currenttabWidth = currentTabPosition.width
     val indicatorOffset by animateDpAsState(
         targetValue = currentTabPosition.left + currenttabWidth/2 - indicatorWidth/2,
-    animationSpec = tween(durationMillis = 0,easing = FastOutSlowInEasing))
+    animationSpec = tween(durationMillis = 100,easing = LinearEasing))
     fillMaxWidth()
         .wrapContentSize(Alignment.BottomStart)
         .offset(x = indicatorOffset)
